@@ -47,6 +47,7 @@ export const NMenuOptionGroup = defineComponent({
             {props.extra ? <> {render(props.extra)}</> : null}
           </span>
           <div>
+            {/* tmNodes 菜单组 */}
             {props.tmNodes.map((tmNode) => itemRenderer(tmNode, menuProps))}
           </div>
         </div>

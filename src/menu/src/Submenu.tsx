@@ -47,6 +47,7 @@ export const NSubmenu = defineComponent({
   setup (props) {
     const MenuChild = useMenuChild(props)
     const { NMenu, NSubmenu } = MenuChild
+    // console.log('NMenu--', NMenu)
     const { props: menuProps, mergedCollapsedRef } = NMenu
     const mergedDisabledRef = computed(() => {
       const { disabled } = props
@@ -67,6 +68,8 @@ export const NSubmenu = defineComponent({
     function handleClick (): void {
       if (!mergedDisabledRef.value) {
         if (!mergedCollapsedRef.value) {
+          // 展开控制
+          // console.log('props.internalKey---', props.internalKey)
           NMenu.toggleExpand(props.internalKey)
         }
         doClick()
@@ -90,6 +93,7 @@ export const NSubmenu = defineComponent({
       mergedDisabled: mergedDisabledRef,
       mergedValue: NMenu.mergedValueRef,
       childActive: useMemo(() => {
+        // TODO 原来是通过path来寻找激活态
         return NMenu.activePathRef.value.includes(props.internalKey)
       }),
       collapsed: computed(() => {
@@ -157,6 +161,7 @@ export const NSubmenu = defineComponent({
               const { tmNodes, collapsed } = this
               return !collapsed ? (
                 <div class={`${mergedClsPrefix}-submenu-children`} role="menu">
+                  {/* 这里就是一个递归操作 */}
                   {tmNodes.map((item) => itemRenderer(item, this.menuProps))}
                 </div>
               ) : null
@@ -165,6 +170,7 @@ export const NSubmenu = defineComponent({
         </NFadeInExpandTransition>
       )
     }
+    // console.log('this.rawNodes', this.rawNodes)
     return this.root ? (
       <NDropdown
         {...this.menuProps?.dropdownProps}
@@ -195,6 +201,7 @@ export const NSubmenu = defineComponent({
               aria-expanded={!this.collapsed}
             >
               {createSubmenuItem()}
+              {/* 很聪明的做法： 其实就是利用popover,popover接收一个slot,hover上去显示内容，垂直情况下我们disabled hover的内容就行了 */}
               {this.isHorizontal ? null : createSubmenuChildren()}
             </div>
           )
@@ -205,8 +212,10 @@ export const NSubmenu = defineComponent({
         class={`${mergedClsPrefix}-submenu`}
         role="menuitem"
         aria-expanded={!this.collapsed}
-      >
+        >
+        {/* 二级菜单项 */}
         {createSubmenuItem()}
+        {/* 二级菜单子项 */}
         {createSubmenuChildren()}
       </div>
     )

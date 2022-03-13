@@ -161,6 +161,8 @@ export default defineComponent({
       return false
     })
 
+    // TODO treeMate
+    // treeMate本身是无状态，不缓存任何组件状态的
     const treeMateRef = computed(() => {
       const { keyField, childrenField } = props
       return createTreeMate<MenuOption, MenuGroupOption, MenuIgnoredOption>(
@@ -175,31 +177,52 @@ export default defineComponent({
         }
       )
     })
+    // console.log('treeMateRef', treeMateRef.value)
+
     const treeKeysLevelOneRef = computed(
       () => new Set(treeMateRef.value.treeNodes.map((e) => e.key))
     )
+
+    // console.log('treeKeysLevelOneRef', treeKeysLevelOneRef.value)
 
     const { watchProps } = props
 
     const uncontrolledValueRef = ref<Key | null>(null)
     if (watchProps?.includes('defaultValue')) {
       watchEffect(() => {
+        // 需要检测变更的默认属性，检测后组件状态会更新
+        // 也就是说默认属性发生变化 组件更新 --- 按以前 改变默认属性 不会引起组件更新吗 也就是只会用一次？
+        // get的时候才会被收集依赖 明白了 这里只会收集props.defaultValue依赖
         uncontrolledValueRef.value = props.defaultValue
       })
     } else {
       uncontrolledValueRef.value = props.defaultValue
     }
     const controlledValueRef = toRef(props, 'value')
+    // 当前选中的菜单item
+    // 合并受控和非受控
+    // TODO mergeXXX是处理含有非受控属性的
     const mergedValueRef = useMergedState(
       controlledValueRef,
       uncontrolledValueRef
     )
     const uncontrolledExpandedKeysRef = ref<Key[]>([])
     const initUncontrolledExpandedKeys = (): void => {
+      console.log('getPath', treeMateRef.value.getPath('food', {
+        includeSelf: true
+      }).keyPath)
+      console.log('treeMateRef.value.getNonLeafKeys()-->', treeMateRef.value.getNonLeafKeys())
+      // console.log('mergedValueRef.value---', mergedValueRef.value)
+      // defaultExpandAll默认是否全部展开
       uncontrolledExpandedKeysRef.value = props.defaultExpandAll
+        // getNonLeafKeys获取非叶子节点的key值
         ? treeMateRef.value.getNonLeafKeys()
+        // defaultExpandedNames和defaultExpandedKeys是等价的
+        // `expanded-names` is deprecated, please use `expanded-keys` instead.'
         : props.defaultExpandedNames ||
-          props.defaultExpandedKeys ||
+        props.defaultExpandedKeys ||
+        // includeSelf是否包括自己
+        // 选中的值不可能是sub菜单，而是子项options,因为mergedValueRef对于选中的子项，所以才不包括当前子项
           treeMateRef.value.getPath(mergedValueRef.value, {
             includeSelf: false
           }).keyPath
@@ -209,18 +232,23 @@ export default defineComponent({
     } else {
       initUncontrolledExpandedKeys()
     }
+    // 兼容
     const controlledExpandedKeysRef = useCompitable(props, [
       'expandedNames',
       'expandedKeys'
     ])
+    // console.log('controlledExpandedKeysRef---', controlledExpandedKeysRef.value)
     const mergedExpandedKeysRef = useMergedState(
       controlledExpandedKeysRef,
       uncontrolledExpandedKeysRef
     )
     const tmNodesRef = computed(() => treeMateRef.value.treeNodes)
+    // console.log('tmNodesRef', tmNodesRef.value)
+    // 获取当前选中的路径
     const activePathRef = computed(() => {
       return treeMateRef.value.getPath(mergedValueRef.value).keyPath
     })
+    // 提供这些数据给子组件
     provide(menuInjectionKey, {
       props,
       mergedCollapsedRef,
@@ -251,6 +279,7 @@ export default defineComponent({
       }
       uncontrolledValueRef.value = value
     }
+    // 组件通信回调
     function doUpdateExpandedKeys (value: Key[]): void {
       const {
         'onUpdate:expandedKeys': _onUpdateExpandedKeys,
@@ -273,12 +302,14 @@ export default defineComponent({
       }
       uncontrolledExpandedKeysRef.value = value
     }
+    // expand展开开关
     function toggleExpand (key: Key): void {
       const currentExpandedKeys = Array.from(mergedExpandedKeysRef.value)
       const index = currentExpandedKeys.findIndex(
         (expanededKey) => expanededKey === key
       )
       if (~index) {
+        // 如果存在则删除 就是收起expand菜单
         currentExpandedKeys.splice(index, 1)
       } else {
         if (props.accordion) {

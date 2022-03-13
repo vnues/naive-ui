@@ -37,6 +37,7 @@ export function itemRenderer (
 ): VNode | undefined {
   const { rawNode } = tmNode
 
+  // 处理Divider节点
   if (isIgnoredNode(rawNode)) {
     if (isDividerNode(rawNode)) {
       return <NMenuDivider key={tmNode.key} {...rawNode.props} />
@@ -67,6 +68,12 @@ export function itemRenderer (
         keep(props, groupPropKeys, { tmNodes: tmNode.children, key })
       )
     }
+    // console.log('keep', keep(props, submenuPropKeys, {
+    //   key,
+    //   rawNodes: rawNode[menuProps.childrenField] as any,
+    //   tmNodes: tmNode.children,
+    //   tmNode
+    // }))
     return h(
       NSubmenu,
       keep(props, submenuPropKeys, {

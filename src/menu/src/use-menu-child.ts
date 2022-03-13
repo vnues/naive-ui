@@ -50,6 +50,7 @@ export interface UseMenuChild {
 export function useMenuChild (props: UseMenuChildProps): UseMenuChild {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const NMenu = inject(menuInjectionKey)!
+  // console.log('menuInjectionKey--', menuInjectionKey)
   const { props: menuProps, mergedCollapsedRef } = NMenu
   const NSubmenu = inject(submenuInjectionKey, null)
   const NMenuOptionGroup = inject<MenuOptionGroupInjection | null>(
